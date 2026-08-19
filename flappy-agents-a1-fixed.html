@@ -152,7 +152,7 @@
     let frames = 0;
     let score = 0;
     let gameState = 'START'; // START, PLAYING, GAMEOVER
-    let gameSpeed = 1.5;
+    let gameSpeed = 2.5;
 
     // Bird Object
     const bird = {
@@ -162,8 +162,8 @@
         height: 20,
         radius: 10,
         velocity: 0,
-        gravity: 0.15,
-        jumpStrength: -6.5,
+        gravity: 0.35,
+        jumpStrength: -8.5,
         rotation: 0,
 
         draw: function() {
@@ -250,7 +250,7 @@
         items: [],
         width: 40,
         gap: 100,
-        dx: 1.5,
+        dx: 2.5,
 
         draw: function() {
             for (let i = 0; i < this.items.length; i++) {
