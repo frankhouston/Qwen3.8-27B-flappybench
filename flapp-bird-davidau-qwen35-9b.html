@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Flappy Bird - DavidAU Qwen3.5-9B</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #70c5ce; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+    canvas { display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    #ui { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); z-index: 10; }
+    .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.7); z-index: 20; }
+    .screen.hidden { display: none; }
+    button { background: #4caf50; color: white; border: none; padding: 15px 40px; font-size: 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #45a049; }
+  </style>
+</head>
+<body>
+  <div id="ui">Score: <span id="score">0</span> | Best: <span id="best">0</span></div>
+  <canvas id="c" width="320" height="480"></canvas>
+  <div id="startScreen" class="screen"><h1 style="color:white;margin-bottom:20px;">Flappy Bird</h1><button onclick="startGame()">Play Now</button></div>
+  <div id="gameOverScreen" class="screen hidden"><h1 style="color:white;margin-bottom:10px;">Game Over</h1><p style="color:white;margin-bottom:20px;">Score: <span id="finalScore">0</span></p><p style="color:white;margin-bottom:20px;">Best: <span id="bestScore">0</span></p><button onclick="startGame()">Play Again</button></div>
+  <script>
+    const c = document.getElementById("c");
+    const ctx = c.getContext("2d");
+    const W = c.width, H = c.height;
+    let state = "START", score = 0, best = localStorage.getItem("flappyBest") || 0, frames = 0;
+    document.getElementById("best").textContent = best;
+    const bird = { x: 60, y: H/2, r: 12, v: 0, rot: 0 };
+    const pipes = []; const bg = { clouds: [], hills: [] };
+    for(let i=0;i<3;i++) bg.clouds.push({x:Math.random()*W,y:Math.random()*H/2,w:60+Math.random()*40,s:0.2+Math.random()*0.3});
+    for(let i=0;i<4;i++) bg.hills.push({x:i*200,y:H-80-Math.random()*40,w:200+Math.random()*100,s:0.5});
+    function flap(){ bird.v = -7; bird.rot = -0.5; }
+    function spawnPipe(){ const gap = 110; const top = 50 + Math.random()*(H-gap-160); pipes.push({x:W, top, gap, passed:false}); }
+    function update(){ if(state!=="PLAYING") return; frames++; bird.v += 0.35; bird.y += bird.v; bird.rot = Math.min(Math.max(bird.v*0.06, -0.5), 1.2); if(frames%90===0) spawnPipe(); for(let i=pipes.length-1;i>=0;i--){ const p=pipes[i]; p.x-=2; if(!p.passed && p.x+52<bird.x){ p.passed=true; score++; document.getElementById("score").textContent=score; } if(bird.x+bird.r>p.x && bird.x-bird.r<p.x+52 && (bird.y-bird.r<p.top || bird.y+bird.r>p.top+p.gap)) gameOver(); if(p.x<-60) pipes.splice(i,1); } bg.clouds.forEach(cl=>{cl.x-=cl.s; if(cl.x<-cl.w) cl.x=W;}); bg.hills.forEach(h=>{h.x-=h.s; if(h.x<-h.w) h.x=W;}); if(bird.y+bird.r>H-20 || bird.y-bird.r<0) gameOver(); }
+    function gameOver(){ state="GAMEOVER"; if(score>best){ best=score; localStorage.setItem("flappyBest",best); } document.getElementById("finalScore").textContent=score; document.getElementById("bestScore").textContent=best; document.getElementById("gameOverScreen").classList.remove("hidden"); document.getElementById("ui").style.display="none"; }
+    function startGame(){ state="PLAYING"; score=0; bird.y=H/2; bird.v=0; bird.rot=0; pipes.length=0; document.getElementById("score").textContent=0; document.getElementById("ui").style.display="block"; document.getElementById("startScreen").classList.add("hidden"); document.getElementById("gameOverScreen").classList.add("hidden"); }
+    function draw(){ ctx.clearRect(0,0,W,H); ctx.fillStyle="#70c5ce"; ctx.fillRect(0,0,W,H); bg.hills.forEach(h=>{ctx.fillStyle="#5d9b5d"; ctx.beginPath(); ctx.moveTo(h.x,H); ctx.lineTo(h.x+h.w/2,h.y); ctx.lineTo(h.x+h.w,H); ctx.fill();}); bg.clouds.forEach(cl=>{ctx.fillStyle="rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.arc(cl.x,cl.y,cl.w/3,0,Math.PI*2); ctx.arc(cl.x+cl.w/2,cl.y-10,cl.w/2,0,Math.PI*2); ctx.arc(cl.x+cl.w,cl.y,cl.w/3,0,Math.PI*2); ctx.fill();}); pipes.forEach(p=>{ctx.fillStyle="#2e7d32"; ctx.fillRect(p.x,0,52,p.top); ctx.fillRect(p.x-4,p.top-20,60,20); ctx.fillRect(p.x,p.top+p.gap,52,H-p.top-p.gap-20); ctx.fillRect(p.x-4,p.top+p.gap,60,20);}); ctx.fillStyle="#e8c56d"; ctx.fillRect(0,H-20,W,20); ctx.fillStyle="#8d6e63"; for(let i=0;i<W;i+=10) ctx.fillRect((i-frames*2)%20,H-20,5,20); ctx.save(); ctx.translate(bird.x,bird.y); ctx.rotate(bird.rot); ctx.fillStyle="#ffeb3b"; ctx.beginPath(); ctx.ellipse(0,0,bird.r,bird.r*0.8,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="white"; ctx.beginPath(); ctx.arc(bird.r*0.3,-bird.r*0.2,bird.r*0.25,0,Math.PI*2); ctx.fill(); ctx.fillStyle="black"; ctx.beginPath(); ctx.arc(bird.r*0.4,-bird.r*0.1,bird.r*0.1,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#ff9800"; ctx.beginPath(); ctx.moveTo(bird.r,-2); ctx.lineTo(bird.r+8,0); ctx.lineTo(bird.r,-4); ctx.fill(); ctx.fillStyle="#8d6e63"; ctx.beginPath(); ctx.ellipse(0,bird.r*0.5,bird.r*0.7,bird.r*0.3,Math.sin(frames/5)*0.3,0,Math.PI*2); ctx.fill(); ctx.restore(); document.getElementById("best").textContent=best; }
+    function loop(){ update(); draw(); requestAnimationFrame(loop); }
+    function handle(e){ if(e.type==="keydown" && e.code!=="Space") return; if(state==="PLAYING") flap(); else if(state==="START" || state==="GAMEOVER") startGame(); e.preventDefault(); }
+    window.addEventListener("keydown",handle); c.addEventListener("mousedown",handle); c.addEventListener("touchstart",e=>{e.preventDefault();handle(e);},{passive:false});
+    loop();
+  </script>
+</body>
+</html>
