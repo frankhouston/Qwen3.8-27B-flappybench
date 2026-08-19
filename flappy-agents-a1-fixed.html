@@ -51,15 +51,19 @@
             z-index: 10;
         }
 
-        .game-over-screen {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px 40px;
-            border-radius: 10px;
-            text-align: center;
-            color: white;
-            display: none;
-            pointer-events: auto;
-        }
+            .game-over-screen {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 20px 40px;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        display: none !important;
+        pointer-events: none;
+    }
+    .game-over-screen.show {
+        display: flex !important;
+        pointer-events: auto;
+    }
 
         .game-over-screen h2 {
             margin: 0 0 10px 0;
@@ -407,9 +411,9 @@
             
             if (gameState === 'PLAYING') {
             // Safety: ensure gameOverScreen is hidden when playing
-            if (gameOverScreen.style.display !== 'none') {
+            if (gameOverScreen.classList.contains('show')) {
                 console.warn('gameOverScreen visible during PLAYING, forcing hide');
-                gameOverScreen.style.display = 'none';
+                gameOverScreen.classList.remove('show');
             }
             // Clear Canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -453,7 +457,7 @@
         console.log('startGame() called');
         // Forcefully hide both screens before changing state
         startScreen.style.display = 'none';
-        gameOverScreen.style.display = 'none';
+        gameOverScreen.classList.remove('show');
         // Force reflow to ensure display change takes effect
         void gameOverScreen.offsetHeight;
         void startScreen.offsetHeight;
@@ -471,7 +475,7 @@
         console.log('!!! GAME OVER !!!', {gameState, score, birdY: bird.y, birdVel: bird.velocity, frames, pipesCount: pipes.items.length, stack: new Error().stack});
         gameState = 'GAMEOVER';
         finalScoreEl.innerText = score;
-        gameOverScreen.style.display = 'block';
+        gameOverScreen.classList.add('show');
         // Ensure bird is centered for replay
         bird.reset();
         console.log('gameOver() called bird.reset()');
