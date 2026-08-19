@@ -404,6 +404,11 @@
             }
             
             if (gameState === 'PLAYING') {
+            // Safety: ensure gameOverScreen is hidden when playing
+            if (gameOverScreen.style.display !== 'none') {
+                console.warn('gameOverScreen visible during PLAYING, forcing hide');
+                gameOverScreen.style.display = 'none';
+            }
             // Clear Canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -444,15 +449,19 @@
     // Game Control Functions
     function startGame() {
         console.log('startGame() called');
+        // Forcefully hide both screens before changing state
         startScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
+        // Force reflow to ensure display change takes effect
+        void gameOverScreen.offsetHeight;
+        void startScreen.offsetHeight;
         gameState = 'PLAYING';
         score = 0;
         frames = 0;
         scoreEl.innerText = score;
         bird.reset();
         pipes.reset();
-        console.log('startGame() completed, bird.y:', bird.y, 'bird.vel:', bird.velocity);
+        console.log('startGame() completed, bird.y:', bird.y, 'bird.vel:', bird.velocity, 'gameOverScreen hidden:', gameOverScreen.style.display);
         // loop() already running from initialization
     }
 
