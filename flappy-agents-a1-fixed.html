@@ -216,6 +216,7 @@
 
             // Floor collision
             if (this.y + this.radius >= (canvas.height || 480) - 20) {
+                console.log('FLOOR COLLISION', {birdY: this.y, birdVel: this.velocity, canvasH: (canvas.height || 480), groundY: (canvas.height || 480) - 20});
                 this.y = (canvas.height || 480) - 20 - this.radius;
                 gameOver();
             }
@@ -301,6 +302,7 @@
                 if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + this.width) {
                     // Vertical overlap (hit top pipe OR hit bottom pipe)
                     if ((bird.y - bird.radius < p.top) || (bird.y + bird.radius > (canvas.height || 480) - p.bottom)) {
+                        console.log('PIPE COLLISION', {birdY: bird.y, birdVel: bird.velocity, birdRadius: bird.radius, pipeX: p.x, pipeTop: p.top, pipeBottom: p.bottom, canvasH: (canvas.height || 480), topHit: bird.y - bird.radius < p.top, bottomHit: bird.y + bird.radius > (canvas.height || 480) - p.bottom});
                         gameOver();
                     }
                 }
@@ -466,6 +468,7 @@
     }
 
     function gameOver() {
+        console.log('!!! GAME OVER !!!', {gameState, score, birdY: bird.y, birdVel: bird.velocity, frames, pipesCount: pipes.items.length, stack: new Error().stack});
         gameState = 'GAMEOVER';
         finalScoreEl.innerText = score;
         gameOverScreen.style.display = 'block';
