@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Tutorial: Using mlx-serve + FlappyBench to Build Flappy Bird with Qwen3.8-27B</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.7;
+      color: #1a1a2e;
+      background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    header h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
+    header p { font-size: 1.2rem; opacity: 0.95; max-width: 700px; margin: 0 auto; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      margin: 0.3rem;
+      backdrop-filter: blur(10px);
+    }
+    .toc {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1.5rem 2rem;
+    }
+    .toc h2 { font-size: 1.1rem; color: #495057; margin-bottom: 1rem; }
+    .toc ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .toc a {
+      color: #667eea;
+      text-decoration: none;
+      padding: 0.4rem 1rem;
+      background: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border: 1px solid #e9ecef;
+      transition: all 0.2s;
+    }
+    .toc a:hover { background: #667eea; color: white; border-color: #667eea; }
+    main { padding: 2.5rem 2rem; }
+    section { margin-bottom: 3rem; }
+    h2 {
+      font-size: 1.8rem;
+      color: #212529;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid #667eea;
+      display: inline-block;
+    }
+    h3 { font-size: 1.3rem; color: #343a40; margin: 2rem 0 1rem; }
+    h4 { font-size: 1.1rem; color: #495057; margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 1rem; color: #495057; }
+    code {
+      background: #f1f3f5;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+      font-size: 0.9em;
+      color: #e83e8c;
+    }
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1.5rem;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      position: relative;
+    }
+    pre::before {
+      content: '';
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #ff5f56;
+      box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f;
+    }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+    .highlight { background: #fff3cd; padding: 1rem; border-radius: 8px; border-left: 4px solid #ffc107; margin: 1.5rem 0; }
+    .success { background: #d4edda; padding: 1rem; border-radius: 8px; border-left: 4px solid #28a745; margin: 1.5rem 0; }
+    .error { background: #f8d7da; padding: 1rem; border-radius: 8px; border-left: 4px solid #dc3545; margin: 1.5rem 0; }
+    .info { background: #d1ecf1; padding: 1rem; border-radius: 8px; border-left: 4px solid #17a2b8; margin: 1.5rem 0; }
+    .step { background: white; border: 1px solid #e9ecef; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .step-number {
+      display: inline-flex;
+      width: 32px; height: 32px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+    .step-content { display: inline-block; vertical-align: top; width: calc(100% - 52px); }
+    .command-box {
+      background: #1e1e2e;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .command-box .prompt { color: #27c93f; }
+    .command-box .command { color: #cdd6f4; }
+    .command-box .output { color: #6c757d; font-style: italic; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e9ecef; }
+    th { background: #f8f9fa; font-weight: 600; color: #495057; }
+    tr:hover { background: #f8f9fa; }
+    .terminal { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    .terminal .prompt { color: #27c93f; }
+    .terminal .cmd { color: #89b4fa; }
+    .terminal .output { color: #a6adc8; }
+    footer {
+      background: #1e1e2e;
+      color: #a6adc8;
+      padding: 2rem;
+      text-align: center;
+    }
+    footer a { color: #89b4fa; }
+    .link-card {
+      display: inline-block;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 280px;
+      vertical-align: top;
+    }
+    .link-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .link-card h3 { color: #667eea; margin-bottom: 0.5rem; }
+    @media (max-width: 640px) {
+      body { padding: 1rem; }
+      header h1 { font-size: 1.8rem; }
+      .link-card { width: 100%; margin: 1rem 0; }
+      pre::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Building Flappy Bird with Qwen3.8-27B-AEON</h1>
+      <p>Complete tutorial: From model download to mlx-serve deployment to flappybench generation</p>
+      <div>
+        <span class="badge">mlx-serve</span>
+        <span class="badge">Qwen3.8-27B-AEON</span>
+        <span class="badge">FlappyBench</span>
+        <span class="badge">Apple Silicon</span>
+        <span class="badge">OpenAI-Compatible API</span>
+      </div>
+    </header>
+
+    <nav class="toc">
+      <h2>📋 Table of Contents</h2>
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#download-model">Download Model</a></li>
+        <li><a href="#setup-mlx-serve">Setup mlx-serve</a></li>
+        <li><a href="#load-model">Load Model</a></li>
+        <li><a href="#generate-flappy">Generate Flappy Bird</a></li>
+        <li><a href="#push-github">Push to GitHub</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <section id="overview">
+        <h2>🎯 Overview</h2>
+        <p>This tutorial walks through the complete process of using <strong>mlx-serve</strong> with the <strong>Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp</strong> model to generate a Flappy Bird game via the <strong>FlappyBench</strong> benchmark prompt. We'll cover everything from downloading the model weights to deploying a local OpenAI-compatible API server and generating production-ready code.</p>
+        
+        <div class="info">
+          <strong>What you'll build:</strong> A complete, playable Flappy Bird game in a single HTML file with Canvas rendering, smooth physics, parallax backgrounds, score tracking, collision detection, and persistent high scores.
+        </div>
+
+        <h3>Architecture</h3>
+        <pre><code>┌─────────────────┐     ┌──────────────┐     ┌────────────────────┐
+│  Model Weights  │────▶│  mlx-serve   │────▶│  OpenAI API        │
+│  (6 safetensors)│     │  (port 11234)│     │  Compatible Server │
+└─────────────────┘     └──────────────┘     └─────────┬──────────┘
+                                                       │
+                              ┌────────────────────────┘
+                              ▼
+                       ┌──────────────┐
+                       │ FlappyBench  │
+                       │   Prompt     │
+                       └──────┬───────┘
+                              │
+                              ▼
+                       ┌──────────────┐
+                       │ index.html   │
+                       │ (Flappy Bird)│
+                       └──────────────┘</code></pre>
+      </section>
+
+      <section id="prerequisites">
+        <h2>📋 Prerequisites</h2>
+        <table>
+          <thead><tr><th>Requirement</th><th>Version/Details</th></tr></thead>
+          <tbody>
+            <tr><td>macOS</td><td>Apple Silicon (M1/M2/M3), macOS 14+</td></tr>
+            <tr><td>RAM</td><td>32 GB+ recommended (model is 28 GB)</td></tr>
+            <tr><td>Disk Space</td><td>40 GB+ free</td></tr>
+            <tr><td>mlx-serve</td><td><code>pip install mlx-serve</code></td></tr>
+            <tr><td>huggingface-hub</td><td><code>pip install huggingface-hub</code></td></tr>
+            <tr><td>git</td><td>For GitHub deployment</td></tr>
+            <tr><td>gh CLI</td><td><code>brew install gh</code> (optional)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Install Dependencies</h3>
+        <pre><code># Install mlx-serve
+pip install mlx-serve
+
+# Install huggingface-hub for downloads
+pip install huggingface-hub
+
+# Install gh CLI (optional, for GitHub)
+brew install gh</code></pre>
+      </section>
+
+      <section id="download-model">
+        <h2>📥 Step 1: Download Model Files</h2>
+        
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Download all required files from Hugging Face</h3>
+            <p>The model <code>swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp</code> consists of 6 safetensors shards plus config/tokenizer files.</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">hf download swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp --include "*.json" --include "*.jinja" --include "*.md" --include ".gitattributes"</span>
+              <br><span class="output"># Downloads config.json, tokenizer.json, tokenizer_config.json, generation_config.json, chat_template.jinja, model.safetensors.index.json, preprocessor_config.json, README.md, oq_imatrix_report.json</span>
+            </div>
+
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">hf download swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp --include "model-*.safetensors"</span>
+              <br><span class="output"># Downloads all 6 shards (~5 GB each = ~30 GB total)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Organize files in LM Studio directory</h3>
+            <p>Create the model directory structure that mlx-serve will discover:</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">mkdir -p ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp</span>
+            </div>
+
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command"># Copy config/tokenizer files
+cp ~/path/to/downloaded/*.json ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp/
+cp ~/path/to/downloaded/*.jinja ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp/
+cp ~/path/to/downloaded/*.md ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp/
+
+# Copy or symlink the 6 safetensors shards
+cp ~/path/to/downloaded/model-0000*-of-00006.safetensors ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp/</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight">
+          <strong>💡 Pro Tip:</strong> If disk space is tight, use symlinks instead of copying the 30 GB of safetensors:
+          <pre><code>ln -s /path/to/model-00001-of-00006.safetensors ~/.lmstudio/models/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp/
+# ... repeat for all 6 shards</code></pre>
+        </div>
+      </section>
+
+      <section id="setup-mlx-serve">
+        <h2>🚀 Step 2: Start mlx-serve Server</h2>
+        
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Launch mlx-serve in headless mode</h3>
+            <p>Point it at your LM Studio models directory so it auto-discovers all models:</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">mlx-serve serve --model-dir ~/.lmstudio/models --port 11234</span>
+            </div>
+
+            <p>Expected output showing model discovery:</p>
+            <pre class="terminal"><span class="prompt">$ </span><span class="cmd">mlx-serve serve --model-dir ~/.lmstudio/models --port 11234</span>
+<span class="output">Logging to /Users/frank/.mlx-serve/logs/mlx-serve-11234.log
+Discovered 11 model(s) under /Users/frank/.lmstudio/models:
+  - swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp (27.9 GB)
+  - mlx-community/Ornith-1.0-9B-8bit (9.7 GB)
+  ...
+mlx-serve 26.7.9 (headless — models load on demand)
+Server listening on http://0.0.0.0:11234</span></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Verify server health</h3>
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">curl http://localhost:11234/health</span>
+              <br><span class="output">{"status":"ok"}</span>
+            </div>
+
+            <h3>List available models</h3>
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">curl http://localhost:11234/v1/models | jq</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="load-model">
+        <h2>🔧 Step 3: Load the Model</h2>
+        
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Load model into memory (on-demand)</h3>
+            <p>Models load on first request, but you can pre-load:</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">curl -X POST http://localhost:11234/v1/load-model \
+  -H "Content-Type: application/json" \
+  -d '{"model": "swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp"}'</span>
+              <br><span class="output">{"model":{"id":"swdjojo/...","loaded":true,"state":"ready","bytes_resident":30001641364}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="success">
+          <strong>✅ Model loaded!</strong> The model is now resident in memory (~28 GB). First load takes ~15-30 seconds depending on your Mac.
+        </div>
+      </section>
+
+      <section id="generate-flappy">
+        <h2>🎮 Step 4: Generate Flappy Bird (FlappyBench)</h2>
+        
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>The FlappyBench Prompt</h3>
+            <p>This is the exact prompt from the <a href="https://github.com/CommandCodeAI/slash-design-showcase/tree/main/flappy-bird" target="_blank">FlappyBench benchmark</a>:</p>
+            
+            <div class="highlight">
+              <strong>Prompt:</strong><br>
+              <code>"Create a complete single HTML file for a cute Flappy Bird style game using Canvas. Smooth gravity, flapping animation, parallax background, score, pipe obstacles, game over screen"</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Send generation request</h3>
+            <p><strong>Critical:</strong> Use <code>max_tokens: 32768</code> — the complete game needs ~9000 tokens. Lower limits will truncate the output.</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">curl -X POST http://localhost:11234/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp",
+    "messages": [
+      {"role": "user", "content": "Create a complete single HTML file for a cute Flappy Bird style game using Canvas. Smooth gravity, flapping animation, parallax background, score, pipe obstacles, game over screen"}
+    ],
+    "max_tokens": 32768,
+    "temperature": 0.3,
+    "stream": true
+  }'</span>
+            </div>
+
+            <h3>Expected performance</h3>
+            <table>
+              <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td>Prefill speed</td><td>~25 tok/s</td></tr>
+                <tr><td>Decode speed</td><td>~4-6 tok/s</td></tr>
+                <tr><td>Total tokens generated</td><td>~9,000</td></tr>
+                <tr><td>Generation time</td><td>~25-30 minutes</td></tr>
+                <tr><td>Finish reason</td><td><code>stop</code> (complete)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">3</span>
+          <div class="step-content">
+            <h3>Save the output</h3>
+            <p>The streaming response will output SSE (Server-Sent Events). Extract the content and save:</p>
+            
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command"># Save to file (extract content from SSE stream)
+curl -X POST ... > flappy_response.json
+
+# Or use the Python script below to extract and save</span>
+            </div>
+
+            <h3>Python helper to extract SSE stream</h3>
+            <pre><code>import json
+import sys
+
+def extract_sse_content(stream_file, output_file):
+    content = ""
+    with open(stream_file) as f:
+        for line in f:
+            if line.startswith("data: "):
+                data = line[6:].strip()
+                if data == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data)
+                    delta = chunk.get("choices", [{}])[0].get("delta", {})
+                    if "content" in delta:
+                        content += delta["content"]
+                except:
+                    pass
+    with open(output_file, "w") as f:
+        f.write(content)
+    print(f"Extracted {len(content)} characters to {output_file}")
+
+extract_sse_content("flappy_response.json", "index.html")</code></pre>
+          </div>
+        </div>
+
+        <div class="success">
+          <strong>✅ Game generated!</strong> Open <code>index.html</code> in a browser to play. Features include:
+          <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+            <li>Smooth gravity physics with realistic flap</li>
+            <li>Animated bird with wing flapping</li>
+            <li>3-layer parallax background</li>
+            <li>Pipe obstacles with collision detection</li>
+            <li>Score counter + persistent high score (localStorage)</li>
+            <li>Start screen + Game Over screen with restart</li>
+            <li>Touch/mouse/keyboard support</li>
+            <li>Responsive design for mobile</li>
+            <li>Device pixel ratio handling for retina displays</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="push-github">
+        <h2>📤 Step 5: Push to GitHub</h2>
+        
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Initialize git repository</h3>
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">mkdir -p Qwen3.8-27B-flappybench
+cd Qwen3.8-27B-flappybench
+cp ../flappy_bird_game.html index.html
+git init
+git add .
+git commit -m "Add Flappy Bird game generated by Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp via mlx-serve"</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Create GitHub repository and push</h3>
+            <div class="command-box">
+              <span class="prompt">$ </span><span class="command">gh repo create "Qwen3.8-27B-flappybench" --public --source=. --push \
+  --description "Flappy Bird game generated by Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp via mlx-serve"</span>
+              <br><span class="output">https://github.com/yourusername/Qwen3.8-27B-flappybench</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">3</span>
+          <div class="step-content">
+            <h3>Enable GitHub Pages (optional)</h3>
+            <p>To host the game live:</p>
+            <ol style="padding-left: 1.5rem;">
+              <li>Go to repo Settings → Pages</li>
+              <li>Source: "Deploy from a branch"</li>
+              <li>Branch: <code>main</code>, Folder: <code>/ (root)</code></li>
+              <li>Save → Your game will be at <code>https://yourusername.github.io/Qwen3.8-27B-flappybench/</code></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>🔧 Troubleshooting & Tips</h2>
+        
+        <h3>Common Issues</h3>
+        <table>
+          <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Output truncated (<code>finish_reason: "length"</code>)</td>
+              <td>Increase <code>max_tokens</code> to 32768. The game needs ~9000 tokens.</td>
+            </tr>
+            <tr>
+              <td>Model not found (404)</td>
+              <td>Use exact model ID: <code>swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp</code></td>
+            </tr>
+            <tr>
+              <td>Out of memory</td>
+              <td>Close other apps; model needs ~28 GB RAM. Use <code>--kv-quant 4</code> to reduce memory.</td>
+            </tr>
+            <tr>
+              <td>Port 11234 in use</td>
+              <td>Run <code>pkill -f mlx-serve</code> then restart</td>
+            </tr>
+            <tr>
+              <td>Slow generation</td>
+              <td>Enable MTP: add <code>"enable_mtp": true</code> to request</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Useful mlx-serve Flags</h3>
+        <pre><code># Reduce memory with KV quantization
+mlx-serve serve --model-dir ~/.lmstudio/models --port 11234 --kv-quant 4
+
+# Disable PLD (Prompt Lookup Decoding)
+mlx-serve serve --model-dir ~/.lmstudio/models --port 11234 --no-pld
+
+# Force MTP on for all models
+mlx-serve serve --model-dir ~/.lmstudio/models --port 11234 --mtp
+
+# Custom context size
+mlx-serve serve --model-dir ~/.lmstudio/models --port 11234 --ctx-size 32768</code></pre>
+
+        <h3>Environment Variables for Clients</h3>
+        <pre><code>export OPENAI_API_BASE=http://localhost:11234/v1
+export OPENAI_API_KEY=***  # any value, not validated
+export OPENAI_MODEL=swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp</code></pre>
+
+        <h3>Using with Other Tools</h3>
+        <div class="link-card">
+          <h3>aider</h3>
+          <p><code>aider --model openai/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp --api-base http://localhost:11234/v1</code></p>
+        </div>
+        <div class="link-card">
+          <h3>Continue.dev</h3>
+          <p>Add to <code>config.json</code>: <code>"models": [{"title": "Qwen3.8-AEON", "provider": "openai", "model": "swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp", "apiBase": "http://localhost:11234/v1"}]</code></p>
+        </div>
+        <div class="link-card">
+          <h3>Open WebUI</h3>
+          <p>Settings → Connections → OpenAI API Base URL: <code>http://localhost:11234/v1</code></p>
+        </div>
+      </section>
+
+      <section>
+        <h2>📚 References</h2>
+        <ul style="padding-left: 1.5rem;">
+          <li><a href="https://github.com/ml-explore/mlx-serve" target="_blank">mlx-serve GitHub</a></li>
+          <li><a href="https://huggingface.co/swdjojo/Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp" target="_blank">Model on Hugging Face</a></li>
+          <li><a href="https://github.com/CommandCodeAI/slash-design-showcase/tree/main/flappy-bird" target="_blank">FlappyBench Benchmark</a></li>
+          <li><a href="https://github.com/frankhouston/Qwen3.8-27B-flappybench" target="_blank">Generated Game Repository</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <p>Tutorial generated from live session • Model: Qwen3.8-27B-AEON-ULTIMATE-UNCENSORED-oQ8e-mtp • Server: mlx-serve 26.7.9</p>
+      <p><a href="https://github.com/frankhouston/Qwen3.8-27B-flappybench">View the generated game on GitHub →</a></p>
+    </footer>
+  </div>
+</body>
+</html>
